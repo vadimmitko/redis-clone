@@ -57,11 +57,27 @@ int main() {
 
   if (client_fd < 0) {
     perror("accept");
+    return 1;
   }
 
   std::cout << "Client connected\n";
 
-  // Do something
+  char buffer[1024];
+
+  while (true) {
+    ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
+
+    if (bytes_read <= 0) {
+      if (bytes_read < 0) perror("recv");
+      break;
+    }
+
+    std::cout << std::string(buffer, bytes_read) << '\n';
+
+    const char* msg = "+PONG\r\n";
+
+    send(client_fd, msg, strlen(msg), 0);
+  }
 
   close(client_fd);
   close(server_fd);
