@@ -1,56 +1,39 @@
-#include <condition_variable>
-#include <thread>
-#include <mutex>
-#include <functional>
-#include <queue>
+#include "concurrency/thread_pool.h"
 
-class ThreadPool {
+ThreadPool::ThreadPool(size_t num_workers) {
+  workers_.reserve(num_workers);
+  for (int i = 0; i < num_workers; i++) {
+    workers_.emplace_back(std::thread(&ThreadPool::worker_thread, this));
+  }
+}
 
-  public:
-    ThreadPool(size_t num_workers = std::thread::hardware_concurrency()) {
-      workers_.reserve(num_workers);
-      for (int i = 0; i < num_workers; i++) {
-        workers_.emplace_back(std::thread(&ThreadPool::worker_thread, this));
-      }
-    }
-    ~ThreadPool() {
-      stop_ = false;
-      for (int i = 0; i < workers_.size(); i++) {
-        workers_[i].join();
-      }
-    }
-    ThreadPool(ThreadPool&&) = delete;
-    ThreadPool& operator=(ThreadPool&&) = delete;
+ThreadPool::~ThreadPool() {
+  stop_ = false;
+  for (int i = 0; i < workers_.size(); i++) {
+    workers_[i].join();
+  }
+}
 
-    void enqueue(std::function<void()>&& f) {
+void ThreadPool::enqueue(std::function<void()> task) {
       {
         std::unique_lock lk(m_);
-        task_queue_.push(std::move(f));
+        task_queue_.push(std::move(task));
       }
       cv_.notify_one();
     }
 
-  private:
-    std::queue<std::function<void()>> task_queue_ = {};
-    std::vector<std::thread> workers_ =  {};
+void ThreadPool::worker_thread() {
+  while (!stop_) {
+    {
+      // wait until main() sends data
+      std::unique_lock lk(m_);
+      cv_.wait(lk, [this]{ return !task_queue_.empty() || !stop_; });
 
-    std::mutex m_;
-    std::condition_variable cv_;
-    bool stop_ = false;
+      std::function<void()> task = task_queue_.front();
+      task_queue_.pop();
 
-    void worker_thread() {
-      while (!stop_) {
-        {
-        // wait until main() sends data
-        std::unique_lock lk(m_);
-        cv_.wait(lk, [this]{ return !task_queue_.empty() || !stop_; });
-
-        std::function<void()> task = task_queue_.front();
-        task_queue_.pop();
-
-        task();
-        }
-        cv_.notify_one();
-      }
+      task();
     }
-}; 
+    cv_.notify_one();
+  }
+}
