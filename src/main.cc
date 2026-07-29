@@ -5,11 +5,7 @@
 #include <unistd.h>
 
 int main() {
-  // Flush after every std::cout / std::cerr
-  std::cout << std::unitbuf;
-  std::cerr << std::unitbuf;
-
-  const uint16_t REDIS_PORT = 6379;
+  const uint16_t redisPort = 6379;
 
   // AF_INET: IPv4 protocol
   // SOCK_STREAM: TCP socket
@@ -35,7 +31,7 @@ int main() {
   // INADDR_ANY: Accepts connections on any IP
   sockaddr_in server_addr{};
   server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons(REDIS_PORT);
+  server_addr.sin_port = htons(redisPort);
   server_addr.sin_addr.s_addr = INADDR_ANY;
 
   if (bind(server_fd, (struct sockaddr*) &server_addr, sizeof(server_addr)) != 0) {
