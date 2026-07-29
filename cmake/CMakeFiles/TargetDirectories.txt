@@ -1,3 +1,0 @@
-/Users/vadimmitko/Desktop/Code/redis-clone/cmake/CMakeFiles/redis_clone.dir
-/Users/vadimmitko/Desktop/Code/redis-clone/cmake/CMakeFiles/edit_cache.dir
-/Users/vadimmitko/Desktop/Code/redis-clone/cmake/CMakeFiles/rebuild_cache.dir
