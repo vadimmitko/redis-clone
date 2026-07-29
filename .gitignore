@@ -1,3 +1,5 @@
 /build/*
+/cmake/*
 compile_commands.json
 .clang
+.cache
