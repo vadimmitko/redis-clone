@@ -5,10 +5,11 @@
 #include <array>
 #include <unistd.h>
 #include <bitset>
+#include <optional>
 
 #include "connection.h"
 
-int create_listening_socket(uint16_t port);
+std::optional<int> create_listening_socket(uint16_t port);
 
 class SocketServer {
   public:

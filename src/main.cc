@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <netinet/in.h>
+#include <optional>
 #include <sys/epoll.h>
 #include <unistd.h>
 
@@ -14,14 +15,14 @@
 int main() {
   const uint16_t redisPort = 6379;
 
-  int server_fd = create_listening_socket(redisPort);
+  std::optional<int> server_fd_o = create_listening_socket(redisPort);
 
-  if (server_fd < 0) {
-    perror("create_listening_socket");
+  if (!server_fd_o.has_value()) {
+    std::cerr << "failed to start server\n";
     return 1;
   }
 
-  SocketServer server(server_fd);
+  SocketServer server(server_fd_o.value());
 
   // get new file descriptor for epoll 
   // configure to your socket and port

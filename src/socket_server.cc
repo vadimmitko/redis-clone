@@ -1,12 +1,13 @@
 #include <cstdint>
 #include <netinet/in.h>
+#include <optional>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <stdio.h>
 
 #include "socket_server.h"
 
-int create_listening_socket(uint16_t port) {
+std::optional<int> create_listening_socket(uint16_t port) {
   // AF_INET: IPv4 protocol
   // SOCK_STREAM: TCP socket
   // File descriptor
@@ -14,7 +15,7 @@ int create_listening_socket(uint16_t port) {
 
   if (server_fd < 0) {
     perror("socket");
-    return -1;
+    return std::nullopt;
   }
 
   // OS usually holds the port in a TIME_WAIT
@@ -24,7 +25,7 @@ int create_listening_socket(uint16_t port) {
   int reuse = 1;
   if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) != 0) {
     perror("setsockopt");
-    return -1;
+    return std::nullopt;
   }
 
   // htons(): Converts port to network byte order
@@ -36,13 +37,13 @@ int create_listening_socket(uint16_t port) {
 
   if (bind(server_fd, (struct sockaddr*) &server_addr, sizeof(server_addr)) != 0) {
     perror("bind");
-    return -1;
+    return std::nullopt;
   }
 
   int connection_backlog = 5;
   if (listen(server_fd, connection_backlog) != 0) {
     perror("listen");
-    return -1;
+    return std::nullopt;
   }
 
   return server_fd;
