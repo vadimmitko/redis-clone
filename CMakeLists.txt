@@ -12,6 +12,7 @@ add_executable(redis_clone)
 target_sources(redis_clone
   PRIVATE
     src/main.cc
+    src/socket_server.cc
     src/concurrency/thread_pool.cc
 )
 target_compile_features(redis_clone PRIVATE cxx_std_20)
