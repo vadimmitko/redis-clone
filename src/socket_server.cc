@@ -7,6 +7,7 @@
 
 #include "socket_server.h"
 
+
 std::optional<int> create_listening_socket(uint16_t port) {
   // AF_INET: IPv4 protocol
   // SOCK_STREAM: TCP socket
@@ -54,4 +55,11 @@ SocketServer::~SocketServer() {
     if (in_use[fd]) close(fd);
   }
   close(server_fd_);
+}
+
+SocketServer::SocketServer(int fd) : server_fd_(fd) {}
+
+std::optional<CommandFn> SocketServer::get_command_fn(const std::string& name) const {
+  return commands_.find(name) == commands_.end() ? std::nullopt : 
+    std::optional(commands_.at(name));
 }

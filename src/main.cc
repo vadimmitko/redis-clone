@@ -7,9 +7,12 @@
 #include <optional>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <functional>
 
 #include "connection.h"
 #include "socket_server.h"
+#include "commands.h"
+#include "resp.h"
 
 
 int main() {
@@ -23,13 +26,6 @@ int main() {
   }
 
   SocketServer server(server_fd_o.value());
-
-  // get new file descriptor for epoll 
-  // configure to your socket and port
-  // while (true) use epoll_wait
-  // on each fd see what is ready (read/write)
-  // for each recv, parse input (not necessary rn) and write back send(Pong)
-  // keep track of each fd buffers (use a struct perhaps)
 
   struct epoll_event ev, events[1024];
 
@@ -106,7 +102,30 @@ int main() {
           continue;
         }
 
-        ssize_t sent_bytes = send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
+        std::optional<ParsedCommand> parsed_o = parse_command(read_buffer);
+
+        if (!parsed_o.has_value()) {
+          perror("parse_command");
+
+          epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, nullptr);
+
+          server.in_use[client_fd] = false;
+          close(client_fd);
+          
+          continue;
+        }
+
+        std::string cmd = std::move(parsed_o->name);
+        std::vector<std::string> args = std::move(parsed_o->args);;
+
+        std::optional<CommandFn> cmd_o = server.get_command_fn(cmd);
+        RespValue result = cmd_o.has_value()
+        ? cmd_o.value()(std::move(args))
+        : RespValue{RespError{"unknown command '" + cmd + "'"}};
+
+        std::string wire = serialize(result);
+
+        ssize_t sent_bytes = send(client_fd, wire.data(), wire.size(), 0);
         if (sent_bytes == -1) {
           perror("send");
         }

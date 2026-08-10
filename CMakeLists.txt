@@ -13,6 +13,8 @@ target_sources(redis_clone
   PRIVATE
     src/main.cc
     src/socket_server.cc
+    src/resp.cc
+    src/commands.cc
     src/concurrency/thread_pool.cc
 )
 target_compile_features(redis_clone PRIVATE cxx_std_20)
@@ -35,6 +37,8 @@ enable_testing()
 add_executable(redis_clone_tests
   test/concurrency/thread_pool_test.cc
   src/concurrency/thread_pool.cc
+  test/resp_test.cc 
+  src/resp.cc
 )
 target_compile_features(redis_clone_tests PRIVATE cxx_std_20)
 target_include_directories(redis_clone_tests PRIVATE include)
