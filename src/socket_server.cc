@@ -58,8 +58,3 @@ SocketServer::~SocketServer() {
 }
 
 SocketServer::SocketServer(int fd) : server_fd_(fd) {}
-
-std::optional<CommandFn> SocketServer::get_command_fn(const std::string& name) const {
-  return commands_.find(name) == commands_.end() ? std::nullopt : 
-    std::optional(commands_.at(name));
-}

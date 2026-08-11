@@ -15,6 +15,7 @@ target_sources(redis_clone
     src/socket_server.cc
     src/resp.cc
     src/commands.cc
+    src/db.cc
     src/concurrency/thread_pool.cc
 )
 target_compile_features(redis_clone PRIVATE cxx_std_20)

@@ -7,7 +7,6 @@
 #include <optional>
 #include <sys/epoll.h>
 #include <unistd.h>
-#include <functional>
 
 #include "connection.h"
 #include "socket_server.h"
@@ -25,6 +24,7 @@ int main() {
     return 1;
   }
 
+  RedisDb db;
   SocketServer server(server_fd_o.value());
 
   struct epoll_event ev, events[1024];
@@ -116,11 +116,11 @@ int main() {
         }
 
         std::string cmd = std::move(parsed_o->name);
-        std::vector<std::string> args = std::move(parsed_o->args);;
+        std::vector<std::string> args = std::move(parsed_o->args);
 
-        std::optional<CommandFn> cmd_o = server.get_command_fn(cmd);
+        std::optional<CommandFn> cmd_o = get_command(cmd);
         RespValue result = cmd_o.has_value()
-        ? cmd_o.value()(std::move(args))
+        ? cmd_o.value()(std::move(args), db)
         : RespValue{RespError{"unknown command '" + cmd + "'"}};
 
         std::string wire = serialize(result);
@@ -128,6 +128,13 @@ int main() {
         ssize_t sent_bytes = send(client_fd, wire.data(), wire.size(), 0);
         if (sent_bytes == -1) {
           perror("send");
+
+          epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, nullptr);
+
+          server.in_use[client_fd] = false;
+          close(client_fd);
+          
+          continue;
         }
       }
     }
