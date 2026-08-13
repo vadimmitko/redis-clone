@@ -3,17 +3,24 @@
 
 #include <vector>
 #include <string>
+#include <variant>
 #include <optional>
-
-#include "commands.h"
 
 constexpr size_t kMaxMultibulkLen = 1024 * 1024;
 constexpr size_t kMaxBulkLen = 512 * 1024 * 1024;
+
+struct SimpleString { std::string value; };
+struct BulkString    { std::string value; };
+struct RespError     { std::string message; };
+struct Nil {};
+using RespValue = std::variant<SimpleString, BulkString, RespError, Nil>;
 
 struct ParsedCommand {
   std::string name;
   std::vector<std::string> args;
 };
+
+std::optional<std::vector<std::string>> parse_tokens(std::string_view buffer);
 
 std::optional<ParsedCommand> parse_command(std::string_view buffer);
 

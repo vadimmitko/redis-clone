@@ -14,8 +14,12 @@ target_sources(redis_clone
     src/main.cc
     src/socket_server.cc
     src/resp.cc
-    src/commands.cc
+    src/commands/ping.cc
+    src/commands/echo.cc 
+    src/commands/set.cc 
+    src/commands/get.cc
     src/db.cc
+    src/util/clock.cc
     src/concurrency/thread_pool.cc
 )
 target_compile_features(redis_clone PRIVATE cxx_std_20)

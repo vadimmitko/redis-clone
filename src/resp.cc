@@ -1,17 +1,18 @@
-#include "charconv"
+#include <charconv>
+#include <optional>
 
 #include "resp.h"
 #include "overloaded.h"
 
 
 // parse *2\r\n$4\r\nECHO\r\n$5\r\nhello\r\n
-std::optional<ParsedCommand> parse_command(std::string_view buffer) {
+std::optional<std::vector<std::string>> parse_tokens(std::string_view buffer) {
   // guards against injection attack to exploit memory by reserving
   // absurd amount 
 
   if (buffer.empty() || buffer.front() != '*') return std::nullopt;
 
-  std::vector<std::string> elements;
+  std::vector<std::string> tokens;
   
   size_t pos = 1; // skip *
   size_t line_end = buffer.find("\r\n", pos);
@@ -26,11 +27,11 @@ std::optional<ParsedCommand> parse_command(std::string_view buffer) {
 
   if (n > kMaxMultibulkLen) return std::nullopt;
 
-  elements.reserve(n);
+  tokens.reserve(n);
 
   pos = line_end + 2; // skip \r\n
                       //
-  for (int i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     if (pos >= buffer.size() || buffer[pos] != '$') return std::nullopt;
 
     pos++; // skip $
@@ -39,31 +40,39 @@ std::optional<ParsedCommand> parse_command(std::string_view buffer) {
     if (line_end == std::string::npos) return std::nullopt;
 
     
-    size_t el_len = 0;
-    auto [ptr, ec] = std::from_chars(buffer.data() + pos, buffer.data() + line_end, el_len);
+    size_t token_len = 0;
+    auto [ptr, ec] = std::from_chars(buffer.data() + pos, buffer.data() + line_end, token_len);
     if (ec != std::errc{}) return std::nullopt;
 
-    if (el_len > kMaxBulkLen) return std::nullopt;
+    if (token_len > kMaxBulkLen) return std::nullopt;
 
     pos = line_end + 2;
 
-    if (pos + el_len + 2 > buffer.size() || buffer.substr(pos + el_len, 2) != "\r\n") return std::nullopt;
+    if (pos + token_len + 2 > buffer.size() || buffer.substr(pos + token_len, 2) != "\r\n") return std::nullopt;
 
-    std::string element;
-    element.reserve(el_len);
-    element.append(buffer.substr(pos, el_len));
-    elements.emplace_back(std::move(element));
+    std::string token;
+    token.reserve(token_len);
+    token.append(buffer.substr(pos, token_len));
+    tokens.emplace_back(std::move(token));
 
-    pos += el_len + 2;
+    pos += token_len + 2;
 
   }
 
+  return std::move(tokens);
+}
+
+std::optional<ParsedCommand> parse_command(std::string_view buffer) {
+  std::optional<std::vector<std::string>> tokens_o = parse_tokens(buffer);
+
+  if (!tokens_o.has_value()) return std::nullopt;
+
   ParsedCommand result = {};
-  result.name = std::move(elements.front());
-  result.args.assign(std::make_move_iterator(elements.begin() + 1),
-                      std::make_move_iterator(elements.end()));
+  result.name = std::move(tokens_o.value().front());
+  result.args.assign(std::make_move_iterator(tokens_o.value().begin() + 1),
+                      std::make_move_iterator(tokens_o.value().end()));
   
-  return std::optional(result);
+  return result;
 }
 
 std::string serialize(const RespValue& v) {

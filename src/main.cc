@@ -77,8 +77,6 @@ int main() {
         
         server.in_use[client_fd] = true;
 
-        std::cout << "Client connected\n";
-
       } else {
         int client_fd = events[i].data.fd;
 
