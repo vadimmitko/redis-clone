@@ -1,5 +1,6 @@
 #include <charconv>
 #include <optional>
+#include <string>
 
 #include "resp.h"
 #include "overloaded.h"
@@ -77,6 +78,7 @@ std::optional<ParsedCommand> parse_command(std::string_view buffer) {
 
 std::string serialize(const RespValue& v) {
     return std::visit(overloaded{
+        [](const Integer& i) { return ':' + std::to_string(i.n) + "\r\n"; },
         [](const SimpleString& s) { return "+" + s.value + "\r\n"; },
         [](const BulkString& b)   { return "$" + std::to_string(b.value.size()) + "\r\n" + b.value + "\r\n"; },
         [](const RespError& e)    { return "-ERR " + e.message + "\r\n"; },

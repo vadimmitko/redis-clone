@@ -11,6 +11,7 @@
 #include "commands/echo.h"
 #include "commands/set.h"
 #include "commands/get.h"
+#include "commands/rpush.h"
 
 using CommandFn = RespValue (*)(std::vector<std::string>&&, RedisDb&);
 
@@ -19,11 +20,12 @@ struct CommandEntry {
   CommandFn fn;
 };
 
-inline constexpr std::array<CommandEntry, 4> kCommands = {{
+inline constexpr std::array<CommandEntry, 5> kCommands = {{
   {"PING", cmd_ping},
   {"ECHO", cmd_echo},
   {"GET", cmd_get},
   {"SET", cmd_set},
+  {"RPUSH", cmd_rpush},
 }};
 
 constexpr std::optional<CommandFn> get_command(std::string_view name) {

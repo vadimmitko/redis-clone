@@ -18,6 +18,7 @@ target_sources(redis_clone
     src/commands/echo.cc 
     src/commands/set.cc 
     src/commands/get.cc
+    src/commands/rpush.cc
     src/db.cc
     src/util/clock.cc
     src/concurrency/thread_pool.cc
