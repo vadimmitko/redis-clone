@@ -10,5 +10,3 @@
 RespValue cmd_rpush(std::vector<std::string>&& args, RedisDb& db);
 
 #endif
-
-

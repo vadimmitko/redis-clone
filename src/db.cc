@@ -1,7 +1,8 @@
 #include "db.h"
 #include "util/clock.h"
+#include <functional>
 
-std::optional<RedisObject> RedisDb::get_value_by_key(const std::string& key) {
+std::optional<std::reference_wrapper<const RedisObject>> RedisDb::get_value_by_key(const std::string& key) {
   auto it = expires_.find(key);
   if (it != expires_.end() && it->second <= now_ms()) {
     expires_.erase(it);
@@ -13,18 +14,18 @@ std::optional<RedisObject> RedisDb::get_value_by_key(const std::string& key) {
   return data_it->second;
 }
 
-RedisObject* RedisDb::get_mutable(const std::string& key) {
+std::optional<std::reference_wrapper<RedisObject>> RedisDb::get_mutable(const std::string& key) {
   auto it = expires_.find(key);
   if (it != expires_.end() && it->second <= now_ms()) {
     expires_.erase(it);
     data_.erase(key);
-    return nullptr;
+    return std::nullopt;
   }
 
   auto data_it = data_.find(key);
-  if (data_it == data_.end()) return nullptr;
+  if (data_it == data_.end()) return std::nullopt;;
   
-  return &data_it->second;
+  return data_it->second;
 }
 
 void RedisDb::set_value(std::string key, RedisObject value) {

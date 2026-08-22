@@ -19,6 +19,9 @@ target_sources(redis_clone
     src/commands/set.cc 
     src/commands/get.cc
     src/commands/rpush.cc
+    src/commands/lpush.cc
+    src/commands/lrange.cc
+    src/commands/llen.cc
     src/db.cc
     src/util/clock.cc
     src/concurrency/thread_pool.cc

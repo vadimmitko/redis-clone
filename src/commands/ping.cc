@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "commands/ping.h"
 
 RespValue cmd_ping(std::vector<std::string>&& args, RedisDb& db) {
   if (args.empty()) return SimpleString { "PONG" };
